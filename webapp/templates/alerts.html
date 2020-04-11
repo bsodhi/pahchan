@@ -1,0 +1,86 @@
+{% extends "secure_base.html" %}
+{% block title %}Object detection service :: Manage alerts {% endblock %}
+{% block main %}
+<script>
+  function showItem(id) {
+    console.info("ID: " + id)
+    $("#alert_id").val(id)
+    $("#alert_phone").val($("#DT-" + id + " > div:nth-of-type(3)").text())
+    $("#alert_email").val($("#DT-" + id + " > div:nth-of-type(2)").text())
+    $("#text_to_check").val($("#DT-" + id + " > div:nth-of-type(4)").text())
+    let x = $("#DT-" + id + " > div:nth-of-type(5)").text()
+    $('#disable_alert').prop('checked', x == "Yes");
+  }
+</script>
+<div class="card">
+  <div class="card-header">
+    Manage Alerts
+  </div>
+  <div class="card-body">
+    <form id="aform" action="/alerts" method="POST">
+      <input id="alert_id" name="alert_id" type="hidden" />
+      <div class="row">
+        <div class="col">
+          <div class="form-group">
+            <label for="alert_phone">Alert phone:</label>
+            <input type="tel" name="alert_phone" class="form-control" id="alert_phone" aria-describedby="gsfHelp" required>
+            <small id="gsfHelp" class="form-text text-muted">
+              Phone number to which an alert may be sent on detecting an object.
+            </small>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="alert_email">Alert email:</label>
+            <input type="email" name="alert_email" class="form-control" id="alert_email" aria-describedby="aemHelp" required>
+            <small id="aemHelp" class="form-text text-muted">
+              Email address to which an alert may be sent on detecting an object.
+            </small>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="text_to_check">Text to detect:</label>
+            <input type="text" name="text_to_check" class="form-control" id="text_to_check" required>
+          </div>
+        </div>
+        <div class="col">
+          <div class="form-group">
+            <label for="disable_alert">Disable alert:</label>
+            <input type="checkbox" name="disable_alert" class="form-control" id="disable_alert">
+          </div>
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+
+
+  </div>
+  {%if not data%}
+  <span class="alert alert-warning">No alerts available yet!</span>
+  {%endif%}
+  <div class="card">
+    <div class="card-body">
+      <div class="row" style="cursor: pointer;">
+        <div class="col-md-1">S#</div>
+        <div class="col">Email</div>
+        <div class="col">Phone</div>
+        <div class="col">Text</div>
+        <div class="col">Disabled</div>
+      </div>
+      {% for d in data %}
+      <div id="DT-{{d['id']}}" class="row mydata" onclick="showItem({{d['id']}})">
+        <div class="col-md-1">{{loop.index}}</div>
+        <div class="col">{{d["alert_email"]}}</div>
+        <div class="col">{{d["alert_phone"]}}</div>
+        <div class="col">{{d["text_to_check"]}}</div>
+        <div class="col">{{'Yes' if d["disable_alert"] else 'No'}}</div>
+      </div>
+      {%endfor%}
+    </div>
+  </div>
+</div>
+
+{% endblock %}
