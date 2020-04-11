@@ -62,8 +62,9 @@
   <span class="alert alert-warning">No alerts available yet!</span>
   {%endif%}
   <div class="card">
+    <div class="card-header">Alerts</div>
     <div class="card-body">
-      <div class="row" style="cursor: pointer;">
+      <div class="row border-bottom border-info text-light bg-dark">
         <div class="col-md-1">S#</div>
         <div class="col">Email</div>
         <div class="col">Phone</div>
@@ -71,7 +72,8 @@
         <div class="col">Disabled</div>
       </div>
       {% for d in data %}
-      <div id="DT-{{d['id']}}" class="row mydata" onclick="showItem({{d['id']}})">
+      <div id="DT-{{d['id']}}" class="row border-bottom border-info" onclick="showItem({{d['id']}})"
+        style="cursor: pointer;">
         <div class="col-md-1">{{loop.index}}</div>
         <div class="col">{{d["alert_email"]}}</div>
         <div class="col">{{d["alert_phone"]}}</div>

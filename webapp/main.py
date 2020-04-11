@@ -67,16 +67,14 @@ def _init_db():
         
         c.execute('''CREATE TABLE IF NOT EXISTS alerts
             (id INTEGER PRIMARY KEY AUTOINCREMENT, 
-            login_id text NOT NULL UNIQUE, 
+            login_id text NOT NULL, 
             text_to_check text NOT NULL,
             alert_phone text NOT NULL,
             alert_email text NOT NULL,
-            disable_alert INTEGER DEFAULT 0
+            disable_alert INTEGER DEFAULT 0,
+            UNIQUE(login_id, text_to_check, alert_phone, alert_email)
             )
             ''')
-        c.execute('''CREATE UNIQUE INDEX IF NOT EXISTS 
-        UI_alerts ON alerts(login_id, text_to_check, alert_phone, alert_email)''')
-
         c.execute('''
             CREATE TABLE IF NOT EXISTS frames
             (id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -85,10 +83,9 @@ def _init_db():
             received_ts text NOT NULL,
             status text NOT NULL, 
             task_type text NOT NULL,
-            detected_text text)
+            detected_text text,
+            UNIQUE(frame_file, task_type))
             ''')
-        c.execute('''CREATE UNIQUE INDEX IF NOT EXISTS 
-        UI_frames ON frames(frame_file, task_type)''')
         conn.commit()
         logging.info("DB initialized.")
 
@@ -249,14 +246,14 @@ def logout():
     return redirect(url_for('index'))
 
 
-def _invoke_alpr_api(file_path, task_type):
+def invoke_backend_api(file_path, task_type):
     logging.info("Starting task {0} on file: {1}".format(task_type, file_path))
     task_dir = file_path[:-len("input_frame.jpg")]
     Path(task_dir).mkdir(parents=True, exist_ok=True)
 
     data = {"task_dir": task_dir, "task_type": task_type,
             "callback_url": CONFIG["callback_url"]}
-    jr = requests.post(CONFIG["alpr_api_url"], json=data).json()
+    jr = requests.post(CONFIG["backend_url"], json=data).json()
     if jr and jr["status"] != "OK":
         logging.error("API service failed to process request. "+jr["body"])
         _update_frame(task_type, file_path, "ERR", jr["body"])
@@ -356,7 +353,7 @@ def home():
                 file.save(file_path)
                 logging.info(
                     "Saved the uploaded file to {0}".format(file_path))
-                TPE.submit(_invoke_alpr_api, file_path, task_type)
+                TPE.submit(invoke_backend_api, file_path, task_type)
                 return redirect(url_for('show_status'))
             else:
                 logging.error("File type {0} not allowed!".format(ext))
@@ -410,7 +407,8 @@ def manage_alerts():
 
     except Exception as ex:
         logging.exception("Error when uploading.")
-        return render_template('home.html', error=str(ex),
+        return render_template('home.html', 
+        error="Error occurred when processing request.",
                                name=escape(login_id))
 
 CONFIG = None
