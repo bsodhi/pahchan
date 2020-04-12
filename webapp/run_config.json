@@ -1,8 +1,8 @@
 {
-    "ssl_cert_file": "scraper_cert.pem",
-    "ssl_key_file": "scraper_key.pem",
+    "ssl_cert_file": "PEM_DIR/scraper_cert.pem",
+    "ssl_key_file": "PEM_DIR/scraper_key.pem",
     "host":"0.0.0.0",
-    "port": 5400,
-    "backend_url": "http://localhost:8000/api",
-    "callback_url": "https://localhost:5400/apicb"
+    "port": MY_PORT,
+    "backend_url": EAST_URL,
+    "callback_url": "https://localhost:MY_PORT/apicb"
 }

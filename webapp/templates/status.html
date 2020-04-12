@@ -42,7 +42,7 @@
                   <td>{{ obj["task_type"] }}</td>
                   <td>{{ obj["status"] }}</td>
                   <td>{{ obj["received_ts"] }}</td>
-                  <td>{{ obj["detected_text"] }}</td>
+                  <td>{{ ":".join(obj["detected_text"].split("\n")) }}</td>
                 </tr>
                 {% endfor %}
               </tbody>

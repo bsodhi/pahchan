@@ -75,6 +75,15 @@ def _init_db():
             UNIQUE(login_id, text_to_check, alert_phone, alert_email)
             )
             ''')
+        c.execute('''CREATE TABLE IF NOT EXISTS alerts_sent
+            (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            alert_id INTEGER NOT NULL, 
+            sent_on text NOT NULL,
+            sent_to text NOT NULL,
+            text_found text NOT NULL,
+            FOREIGN KEY(alert_id) REFERENCES alerts(id)
+            )
+            ''')
         c.execute('''
             CREATE TABLE IF NOT EXISTS frames
             (id INTEGER PRIMARY KEY AUTOINCREMENT, 
@@ -146,6 +155,24 @@ def _update_alert(id, alert_email, alert_phone, text_to_check, disable_alert):
         return conn.total_changes
 
 
+def _add_sent_alert(alert_id, sent_to, text_found):
+    with sqlite3.connect('app.db') as conn:
+        c = conn.cursor()
+        c.execute("""INSERT INTO alerts_sent(
+            alert_id, sent_on, sent_to, text_found)
+            VALUES (?,?,?,?)""",
+            (alert_id, get_ts_str(), sent_to, text_found))
+        conn.commit()
+
+def _get_sent_alerts(alert_id):
+    with sqlite3.connect('app.db') as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("""SELECT * FROM alerts_sent WHERE alert_id=?
+            order by id desc""",
+            (alert_id,))
+        return c.fetchall()
+
 def _add_frame(client_id, frame_file, task_type):
     with sqlite3.connect('app.db') as conn:
         c = conn.cursor()
@@ -154,7 +181,6 @@ def _add_frame(client_id, frame_file, task_type):
         VALUES (?,?,?,?,?)""",
                   (client_id, frame_file, get_ts_str(), "NEW", task_type))
         conn.commit()
-
 
 def _update_frame(task_type, frame_file, status, detected_text):
     with sqlite3.connect('app.db') as conn:
@@ -247,19 +273,25 @@ def logout():
 
 
 def invoke_backend_api(file_path, task_type):
-    logging.info("Starting task {0} on file: {1}".format(task_type, file_path))
-    task_dir = file_path[:-len("input_frame.jpg")]
-    Path(task_dir).mkdir(parents=True, exist_ok=True)
-
-    data = {"task_dir": task_dir, "task_type": task_type,
-            "callback_url": CONFIG["callback_url"]}
-    jr = requests.post(CONFIG["backend_url"], json=data).json()
-    if jr and jr["status"] != "OK":
-        logging.error("API service failed to process request. "+jr["body"])
-        _update_frame(task_type, file_path, "ERR", jr["body"])
-    else:
-        logging.info("API service result: {0}".format(jr["body"]))
-        _update_frame(task_type, file_path, "API", jr["body"])
+    try:
+        logging.info("Starting task {0} on file: {1}".format(task_type, file_path))
+        data = {"file_path": file_path, "task_type": task_type,
+                "callback_url": CONFIG["callback_url"]}
+        res = requests.post(CONFIG["backend_url"], json=data)
+        res.raise_for_status()
+        jr = res.json()
+        if jr["status"] != "OK":
+            logging.error("API service failed to process request. "+jr["body"])
+            _update_frame(task_type, file_path, "ERR", jr["body"])
+        else:
+            logging.info("API service result: {0}".format(jr["body"]))
+            _update_frame(task_type, file_path, "API", jr["body"])
+    except Exception as ex:
+        logging.exception("Error occurred when invoking backend API.")
+        try:
+            _update_frame(task_type, file_path, "ERR", str(ex))
+        except Exception as e2:
+            logging.exception("Failed to update task information in DB.")
 
 def _process_alert(file_path, text):
     try:
@@ -269,9 +301,10 @@ def _process_alert(file_path, text):
             logging.info("No alerts configured by user "+str(pp[-3]))
             return
         for al in alerts:
-            email, ttc = al.get("alert_email"), al.get("text_to_check")
+            email, ttc = al.get("alert_email"), al.get("text_to_check")                
             if re.search(ttc, text):
                 logging.info("Sending alert to {0} for match {1}.".format(email, text))
+                _add_sent_alert(al.get("id"), email, text)
                 # TODO: Send the email and other forms of alerts
     except Exception as ex:
         logging.exception("Error occurred when processing alerts.")
@@ -353,6 +386,7 @@ def home():
                 file.save(file_path)
                 logging.info(
                     "Saved the uploaded file to {0}".format(file_path))
+                _add_frame(login_id, file_path, task_type)
                 TPE.submit(invoke_backend_api, file_path, task_type)
                 return redirect(url_for('show_status'))
             else:
@@ -378,12 +412,24 @@ def show_status():
     login_id = session['login_id']
     try:
         frames = _get_frames(login_id)
-        logging.info("Found {0} frames".format(len(frames)))
+        logging.info("Found {0} frames in DB".format(len(frames)))
         return render_template('status.html', data=frames,
                                name=escape(login_id))
     except Exception as ex:
         return render_template('status.html', error=str(ex),
                                name=escape(login_id))
+
+
+@app.route('/sa/<int:alert_id>', methods=['GET'])
+@auth_check
+def get_sent_alerts(alert_id):
+    try:
+        al = _get_sent_alerts(alert_id)
+        return render_template('sent_alerts.html', data=al)
+    except Exception as ex:
+        msg = "Error occurred while fetching sent alerts."
+        logging.exception(msg)
+        return render_template('sent_alerts.html', error=msg)
 
 
 @app.route('/alerts', methods=['GET', 'POST'])
@@ -407,7 +453,7 @@ def manage_alerts():
 
     except Exception as ex:
         logging.exception("Error when uploading.")
-        return render_template('home.html', 
+        return render_template('alerts.html', 
         error="Error occurred when processing request.",
                                name=escape(login_id))
 

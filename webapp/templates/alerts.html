@@ -11,6 +11,13 @@
     let x = $("#DT-" + id + " > div:nth-of-type(5)").text()
     $('#disable_alert').prop('checked', x == "Yes");
   }
+
+  function getAlerts(id) {
+    $.get("/sa/"+id, function (data) {
+      $(".modal-body").html(data);
+      $('#myModal').modal('show');
+    });
+  }
 </script>
 <div class="card">
   <div class="card-header">
@@ -23,7 +30,8 @@
         <div class="col">
           <div class="form-group">
             <label for="alert_phone">Alert phone:</label>
-            <input type="tel" name="alert_phone" class="form-control" id="alert_phone" aria-describedby="gsfHelp" required>
+            <input type="tel" name="alert_phone" class="form-control" id="alert_phone" aria-describedby="gsfHelp"
+              required>
             <small id="gsfHelp" class="form-text text-muted">
               Phone number to which an alert may be sent on detecting an object.
             </small>
@@ -32,7 +40,8 @@
         <div class="col">
           <div class="form-group">
             <label for="alert_email">Alert email:</label>
-            <input type="email" name="alert_email" class="form-control" id="alert_email" aria-describedby="aemHelp" required>
+            <input type="email" name="alert_email" class="form-control" id="alert_email" aria-describedby="aemHelp"
+              required>
             <small id="aemHelp" class="form-text text-muted">
               Email address to which an alert may be sent on detecting an object.
             </small>
@@ -60,7 +69,7 @@
   </div>
   {%if not data%}
   <span class="alert alert-warning">No alerts available yet!</span>
-  {%endif%}
+  {%else%}
   <div class="card">
     <div class="card-header">Alerts</div>
     <div class="card-body">
@@ -69,18 +78,43 @@
         <div class="col">Email</div>
         <div class="col">Phone</div>
         <div class="col">Text</div>
-        <div class="col">Disabled</div>
+        <div class="col-md-1">Disabled</div>
+        <div class="col-md-1">Events</div>
       </div>
       {% for d in data %}
-      <div id="DT-{{d['id']}}" class="row border-bottom border-info" onclick="showItem({{d['id']}})"
-        style="cursor: pointer;">
+      <div id="DT-{{d['id']}}" class="row border-bottom border-info">
         <div class="col-md-1">{{loop.index}}</div>
-        <div class="col">{{d["alert_email"]}}</div>
+        <div class="col" style="cursor: pointer;" onclick="showItem({{d['id']}})">{{d["alert_email"]}}</div>
         <div class="col">{{d["alert_phone"]}}</div>
         <div class="col">{{d["text_to_check"]}}</div>
-        <div class="col">{{'Yes' if d["disable_alert"] else 'No'}}</div>
+        <div class="col-md-1">{{'Yes' if d["disable_alert"] else 'No'}}</div>
+        <div class="col-md-1">
+          <button type="button" class="btn btn-info btn-sm" 
+          onclick="getAlerts({{d['id']}})">Show</button>
+        </div>
       </div>
       {%endfor%}
+    </div>
+  </div>
+  {%endif%}
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="modTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modTitle">Alert Events</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Loading...
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
     </div>
   </div>
 </div>
