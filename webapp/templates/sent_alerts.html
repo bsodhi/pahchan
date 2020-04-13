@@ -1,15 +1,18 @@
 {% if not data %}
 <p>No results available.</p>
 {% else %}
-<ul class="list-group list-group-flush">
-    {% for obj in data %}
-    <li class="list-group-item">
-        <span class="badge badge-primary">{{obj["sent_on"] | datefmt}}</span>
-        :: {{obj["sent_to"]}}
-        <div class="badge badge-info text-wrap">
-            {{obj["text_found"]}}
-        </div>
-    </li>
-    {% endfor %}
-</ul>
+<div class="row bg-secondary text-white text-uppercase font-weight-bold">
+    <div class="col-md-1">S#</div>
+    <div class="col">Sent At</div>
+    <div class="col">Sent To</div>
+    <div class="col">Matched Text</div>
+</div>
+{% for obj in data %}
+<div class="row">
+    <div class="col-md-1">{{loop.index}}</div>
+    <div class="col">{{obj["sent_on"] | datefmt}}</div>
+    <div class="col">{{obj["sent_to"]}}</div>
+    <div class="col">{{obj["text_found"]}}</div>
+</div>
+{% endfor %}
 {% endif %}

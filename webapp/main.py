@@ -397,7 +397,11 @@ def home():
                 logging.info(
                     "Saved the uploaded file to {0}".format(file_path))
                 _add_frame(login_id, file_path, task_type)
-                TPE.submit(invoke_backend_api, file_path, task_type)
+                if "hyb" == task_type:
+                    TPE.submit(invoke_backend_api, file_path, "ocr")
+                    TPE.submit(invoke_backend_api, file_path, "alpr")
+                else:
+                    TPE.submit(invoke_backend_api, file_path, task_type)
                 return redirect(url_for('show_status'))
             else:
                 logging.error("File type {0} not allowed!".format(ext))
