@@ -4,7 +4,7 @@
 <ul class="list-group list-group-flush">
     {% for obj in data %}
     <li class="list-group-item">
-        <span class="badge badge-primary">{{obj["sent_on"]}}</span>
+        <span class="badge badge-primary">{{obj["sent_on"] | datefmt}}</span>
         :: {{obj["sent_to"]}}
         <div class="badge badge-info text-wrap">
             {{obj["text_found"]}}

@@ -41,8 +41,8 @@
                 <tr>
                   <td>{{ obj["task_type"] }}</td>
                   <td>{{ obj["status"] }}</td>
-                  <td>{{ obj["received_ts"] }}</td>
-                  <td>{{ ":".join(obj["detected_text"].split("\n")) }}</td>
+                  <td>{{ obj["received_ts"]|datefmt }}</td>
+                  <td>{{ "--" if not obj["detected_text"] else ":".join(obj["detected_text"].split("\n")) }}</td>
                 </tr>
                 {% endfor %}
               </tbody>

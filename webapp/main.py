@@ -23,7 +23,9 @@ from flask.helpers import flash, send_file, send_from_directory
 from markupsafe import escape
 from passlib.hash import pbkdf2_sha256
 from werkzeug.utils import secure_filename
+import datetime
 
+TS_FORMAT = "%Y%m%d_%H%M%S"
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
 
@@ -46,9 +48,17 @@ def auth_check(f):
         return f(*args, **kwargs)
     return wrapper
 
-
+@app.template_filter('datefmt')
+def _jinja2_filter_datefmt(dt, fmt=None):
+    if not fmt:
+        fmt = TS_FORMAT
+    dt = datetime.datetime.strptime(dt, fmt)
+    nat_dt = dt.replace(tzinfo=None)
+    to_fmt='%d-%m-%Y@%I:%M:%S %p'
+    return nat_dt.strftime(to_fmt) 
+    
 def get_ts_str():
-    return DT.now().strftime("%Y%m%d_%H%M%S")
+    return DT.now().strftime(TS_FORMAT)
 
 
 def random_str(size=10):

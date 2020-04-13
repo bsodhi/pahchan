@@ -78,11 +78,11 @@
         <div class="col">Email</div>
         <div class="col">Phone</div>
         <div class="col">Text</div>
-        <div class="col-md-1">Disabled</div>
+        <div class="col-md-1">Disable</div>
         <div class="col-md-1">Events</div>
       </div>
       {% for d in data %}
-      <div id="DT-{{d['id']}}" class="row border-bottom border-info">
+      <div id="DT-{{d['id']}}" class="row border-bottom border-info mb-2">
         <div class="col-md-1">{{loop.index}}</div>
         <div class="col" style="cursor: pointer;" onclick="showItem({{d['id']}})">{{d["alert_email"]}}</div>
         <div class="col">{{d["alert_phone"]}}</div>
