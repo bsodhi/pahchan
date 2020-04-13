@@ -20,14 +20,6 @@ PEM_DIR=.
 
 set -e # Stop on error
 
-srep() {
-    local file_nm=$1
-    local search=$2
-    local replace=$3
-    sed -i 's@${search}@'"${replace}"'@' ${file_nm}
-    #sed -i "s/${search}/${replace}/g" ${file_nm}
-}
-
 spin_until() {
     while ! grep -i "$1" $2;
     do printf ".";
@@ -65,9 +57,9 @@ deactivate
 echo "Starting web application ..."
 source $HOME/.pyenv/ML/bin/activate
 cd $WEB_HOME/webapp
-srep run_config.json "MY_PORT" $WEB_PORT
-srep run_config.json "EAST_URL" $EAST_URL
-srep run_config.json "PEM_DIR" $PEM_DIR
+sed -i "s~WEB_PORT~$WEB_PORT~g" run_config.json
+sed -i "s~EAST_URL~$EAST_URL~g" run_config.json
+sed -i "s~PEM_DIR~$PEM_DIR~g" run_config.json
 #pip install -r requirements.txt
 python main.py run_config.json > console.log 2>errors.log &
 if [ $? -eq 0 ]

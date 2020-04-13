@@ -1,20 +1,15 @@
-<div class="card">
-    <div class="card-header">
-        Alerts Sent
-    </div>
-    {% if not data %}
-    <p>No results available.</p>
-    {% else %}
-    <ul class="list-group list-group-flush">
-        {% for obj in data %}
-        <li class="list-group-item">
-            <span class="badge badge-primary">{{obj.get("sent_on")}}</span>
-             :: {{obj.get("sent_to")}} 
-             <div class="badge badge-info text-wrap" style="width: 6rem;">
-                {{obj.get("sent_on")}}
-            </div>
-        </li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-</div>
+{% if not data %}
+<p>No results available.</p>
+{% else %}
+<ul class="list-group list-group-flush">
+    {% for obj in data %}
+    <li class="list-group-item">
+        <span class="badge badge-primary">{{obj["sent_on"]}}</span>
+        :: {{obj["sent_to"]}}
+        <div class="badge badge-info text-wrap">
+            {{obj["text_found"]}}
+        </div>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}

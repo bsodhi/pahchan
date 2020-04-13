@@ -301,10 +301,10 @@ def _process_alert(file_path, text):
             logging.info("No alerts configured by user "+str(pp[-3]))
             return
         for al in alerts:
-            email, ttc = al.get("alert_email"), al.get("text_to_check")                
+            email, ttc = al["alert_email"], al["text_to_check"]              
             if re.search(ttc, text):
                 logging.info("Sending alert to {0} for match {1}.".format(email, text))
-                _add_sent_alert(al.get("id"), email, text)
+                _add_sent_alert(al["id"], email, text)
                 # TODO: Send the email and other forms of alerts
     except Exception as ex:
         logging.exception("Error occurred when processing alerts.")
