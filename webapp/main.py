@@ -396,11 +396,14 @@ def home():
                 file.save(file_path)
                 logging.info(
                     "Saved the uploaded file to {0}".format(file_path))
-                _add_frame(login_id, file_path, task_type)
+                
                 if "hyb" == task_type:
+                    _add_frame(login_id, file_path, "ocr")
                     TPE.submit(invoke_backend_api, file_path, "ocr")
+                    _add_frame(login_id, file_path, "alpr")
                     TPE.submit(invoke_backend_api, file_path, "alpr")
                 else:
+                    _add_frame(login_id, file_path, task_type)
                     TPE.submit(invoke_backend_api, file_path, task_type)
                 return redirect(url_for('show_status'))
             else:
