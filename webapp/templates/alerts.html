@@ -13,7 +13,7 @@
   }
 
   function getAlerts(id) {
-    $.get("/sa/"+id, function (data) {
+    $.get("sa/"+id, function (data) {
       $(".modal-body").html(data);
       $('#myModal').modal('show');
     });
@@ -24,7 +24,7 @@
     Manage Alerts
   </div>
   <div class="card-body">
-    <form id="aform" action="/alerts" method="POST">
+    <form id="aform" action="alerts" method="POST">
       <input id="alert_id" name="alert_id" type="hidden" />
       <div class="row">
         <div class="col">

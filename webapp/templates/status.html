@@ -25,7 +25,7 @@
         {% for frame_file, items in data|groupby("frame_file") %}
         <tr>
           <td>{{loop.index}}</td>
-          <td><img src="/images/{{items[0]['id']}}" style="max-width: 250px;"/></td>
+          <td><img src="images/{{items[0]['id']}}" style="max-width: 250px;"/></td>
           <td>
             <table>
               <thead>

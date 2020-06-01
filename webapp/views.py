@@ -1,4 +1,3 @@
-import argparse
 import concurrent.futures
 import glob
 import io
@@ -23,39 +22,25 @@ from flask.helpers import flash, send_file, send_from_directory
 from markupsafe import escape
 from passlib.hash import pbkdf2_sha256
 from werkzeug.utils import secure_filename
-import datetime
+from flask.blueprints import Blueprint
 
 TS_FORMAT = "%Y%m%d_%H%M%S"
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
 Path(UPLOAD_FOLDER).mkdir(parents=True, exist_ok=True)
 
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-logging.basicConfig(filename='server.log',
-                    level=logging.INFO,
-                    format='%(asctime)s %(levelname)s:: %(message)s',
-                    datefmt='%d-%m-%Y@%I:%M:%S %p')
-
 TPE = concurrent.futures.ThreadPoolExecutor(max_workers=5)
 
+vbp = Blueprint('bp', __name__, template_folder='templates')
 
 def auth_check(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
         if "login_id" not in session:
             logging.warning("Illegal access to operation. Login required.")
-            return redirect(url_for('login'))
+            return redirect(url_for('bp.login'))
         return f(*args, **kwargs)
     return wrapper
 
-@app.template_filter('datefmt')
-def _jinja2_filter_datefmt(dt, fmt=None):
-    if not fmt:
-        fmt = TS_FORMAT
-    dt = datetime.datetime.strptime(dt, fmt)
-    nat_dt = dt.replace(tzinfo=None)
-    to_fmt='%d-%m-%Y@%I:%M:%S %p'
-    return nat_dt.strftime(to_fmt) 
     
 def get_ts_str():
     return DT.now().strftime(TS_FORMAT)
@@ -232,7 +217,6 @@ def _fmt_date_str(dt_str):
         return dt_str
 
 
-@app.route('/signup', methods=['POST', 'GET'])
 def signup():
     error = None
     try:
@@ -250,7 +234,6 @@ def signup():
     return render_template('signup.html', error=error)
 
 
-@app.route('/login', methods=['POST', 'GET'])
 def login():
     error = None
     try:
@@ -259,7 +242,7 @@ def login():
                              request.form['password']):
                 logging.info("Login successful.")
                 session['login_id'] = request.form['login_id']
-                return redirect(url_for('home'))
+                return redirect(url_for('bp.home'))
             else:
                 error = 'Invalid username/password'
     except Exception as ex:
@@ -270,16 +253,14 @@ def login():
     return render_template('index.html', error=error)
 
 
-@app.route('/')
 def index():
     return render_template('index.html')
 
 
-@app.route('/logout')
 def logout():
     # remove the username from the session if it's there
     session.pop('login_id', None)
-    return redirect(url_for('index'))
+    return redirect(url_for('bp.index'))
 
 
 def invoke_backend_api(file_path, task_type):
@@ -319,7 +300,6 @@ def _process_alert(file_path, text):
     except Exception as ex:
         logging.exception("Error occurred when processing alerts.")
 
-@app.route('/images/<int:id>')
 @auth_check
 def base_static(id):
     row = _get_frame(id)
@@ -329,7 +309,6 @@ def base_static(id):
         logging.error("No row found for ID {}".format(id))
 
 
-@app.route('/apicb', methods=['POST'])
 def api_cb():
     try:
         if request.method != 'POST':
@@ -364,7 +343,6 @@ def api_cb():
         return jsonify(status="ERROR", body="Error occured: "+str(ex))
 
 
-@app.route('/home', methods=['GET', 'POST'])
 @auth_check
 def home():
     login_id = session['login_id']
@@ -389,7 +367,7 @@ def home():
             ext = os.path.splitext(file.filename)[1]
             if file and ext in [".jpg", ".png", ".jpeg"]:
                 sfn = secure_filename(file.filename)
-                task_dir = os.path.join(app.config['UPLOAD_FOLDER'],
+                task_dir = os.path.join(UPLOAD_FOLDER,
                                         login_id, get_ts_str())
                 file_path = os.path.join(task_dir, "input_frame.jpg")
                 Path(task_dir).mkdir(parents=True, exist_ok=True)
@@ -405,7 +383,7 @@ def home():
                 else:
                     _add_frame(login_id, file_path, task_type)
                     TPE.submit(invoke_backend_api, file_path, task_type)
-                return redirect(url_for('show_status'))
+                return redirect(url_for('bp.show_status'))
             else:
                 logging.error("File type {0} not allowed!".format(ext))
                 return render_template('home.html',
@@ -423,7 +401,6 @@ def home():
                                name=escape(login_id))
 
 
-@app.route('/status', methods=['GET'])
 @auth_check
 def show_status():
     login_id = session['login_id']
@@ -436,8 +413,6 @@ def show_status():
         return render_template('status.html', error=str(ex),
                                name=escape(login_id))
 
-
-@app.route('/sa/<int:alert_id>', methods=['GET'])
 @auth_check
 def get_sent_alerts(alert_id):
     try:
@@ -449,7 +424,6 @@ def get_sent_alerts(alert_id):
         return render_template('sent_alerts.html', error=msg)
 
 
-@app.route('/alerts', methods=['GET', 'POST'])
 @auth_check
 def manage_alerts():
     login_id = session['login_id']
@@ -476,23 +450,14 @@ def manage_alerts():
 
 CONFIG = None
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--debug", type=bool, nargs='?',
-                        const=True, default=False,
-                        dest="debug", help="Run the server in debug mode.")
-    parser.add_argument("cfg_file_path", type=str,
-                        help="Scrapper runner config file path.")
-    args = parser.parse_args()
-    app.secret_key = random_str(size=30)
-    _init_db()
-
-    with open(args.cfg_file_path, "r") as cfg_file:
-        CONFIG = json.load(cfg_file)
-
-    logging.info("CONFIG: "+str(CONFIG))
-    app.run(host=CONFIG["host"],
-            port=CONFIG["port"],
-            threaded=True,
-            ssl_context=(CONFIG["ssl_cert_file"], CONFIG["ssl_key_file"]),
-            debug=args.debug)
+# Add the view routes
+vbp.add_url_rule('/alerts', view_func=manage_alerts, methods=['GET', 'POST'])
+vbp.add_url_rule('/signup', view_func=signup, methods=['GET', 'POST'])
+vbp.add_url_rule('/login', view_func=login, methods=['GET', 'POST'])
+vbp.add_url_rule('/', view_func=index, methods=['GET'])
+vbp.add_url_rule('/logout', view_func=logout, methods=['GET'])
+vbp.add_url_rule('/images/<int:id>', view_func=base_static, methods=['GET', 'POST'])
+vbp.add_url_rule('/apicb', view_func=api_cb, methods=['POST'])
+vbp.add_url_rule('/home', view_func=home, methods=['GET', 'POST'])
+vbp.add_url_rule('/status', view_func=show_status, methods=['GET'])
+vbp.add_url_rule('/sa/<int:alert_id>', view_func=get_sent_alerts, methods=['GET'])

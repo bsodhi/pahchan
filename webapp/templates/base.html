@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <base href="/pahchan/">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
   <meta name="description" content="" />
@@ -27,7 +28,7 @@
     <span class="alert alert-warning">{{error}}</span>
     {%endif%}
     {% block main %}
-    <form action="/login" method="POST">
+    <form action="login" method="POST">
       Login ID: <input name="login_id" type="text" /><br /><br />
       Password: <input name="password" type="password" /><br />
       <button type="submit">Login</button>
