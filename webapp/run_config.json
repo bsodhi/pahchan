@@ -1,8 +1,6 @@
 {
-    "ssl_cert_file": "PEM_DIR/scraper_cert.pem",
-    "ssl_key_file": "PEM_DIR/scraper_key.pem",
     "host":"0.0.0.0",
     "port": WEB_PORT,
     "backend_url": "EAST_URL",
-    "callback_url": "https://localhost:WEB_PORT/apicb"
+    "callback_url": "http://localhost:WEB_PORT/apicb"
 }
