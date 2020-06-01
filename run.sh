@@ -1,20 +1,20 @@
 #!/bin/bash
 
-
+VA_HOME=$HOME/vision_apps
 # ALPR settings
-ALPR_HOME=$HOME/alpr-unconstrained
+ALPR_HOME=$VA_HOME/alpr-unconstrained
 ALPR_PORT=8888
 ALPR_URL=http://localhost:$ALPR_PORT/api
 
 # EAST backend settings
-EAST_HOME=$HOME/EAST
+EAST_HOME=$VA_HOME/EAST
 EAST_PORT=8000
 EAST_WORKERS=8
 EAST_URL=http://localhost:$EAST_PORT/api
 EAST_CHKPT=$EAST_HOME/east_icdar2015_resnet_v1_50_rbox
 
 # Web application settings
-WEB_HOME=$HOME/pahchan
+WEB_HOME=$VA_HOME/pahchan
 WEB_PORT=8796
 PEM_DIR=.
 
@@ -61,7 +61,7 @@ sed -i "s~WEB_PORT~$WEB_PORT~g" run_config.json
 sed -i "s~EAST_URL~$EAST_URL~g" run_config.json
 sed -i "s~PEM_DIR~$PEM_DIR~g" run_config.json
 #pip install -r requirements.txt
-python main.py run_config.json > console.log 2>errors.log &
+python pahchan.py run_config.json > console.log 2>errors.log &
 if [ $? -eq 0 ]
 then
     spin_until "Debug" console.log
