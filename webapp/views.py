@@ -380,6 +380,10 @@ def home():
                     TPE.submit(invoke_backend_api, file_path, "ocr")
                     _add_frame(login_id, file_path, "alpr")
                     TPE.submit(invoke_backend_api, file_path, "alpr")
+                    _add_frame(login_id, file_path, "color")
+                    TPE.submit(invoke_backend_api, file_path, "color")
+                    _add_frame(login_id, file_path, "vtype")
+                    TPE.submit(invoke_backend_api, file_path, "vtype")
                 else:
                     _add_frame(login_id, file_path, task_type)
                     TPE.submit(invoke_backend_api, file_path, task_type)
