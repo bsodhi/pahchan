@@ -129,3 +129,9 @@ dmypy.json
 .pyre/
 .DS_Store
 *.db
+
+# ide files
+.idea
+
+# test uploads
+webapp/uploads/
